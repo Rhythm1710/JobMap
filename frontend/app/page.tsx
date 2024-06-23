@@ -28,7 +28,7 @@ export default function Home() {
             asChild
             className="mt-7"
           >
-            <Link href="/login">Get Started</Link>
+            <Link href="/add-job">Get Started</Link>
           </Button>
         </div>
         <Image

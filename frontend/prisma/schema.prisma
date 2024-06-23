@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgres://jobmap_user:6wchE5MlWKG1amG07xJzknNpXVvMl72b@dpg-cppir4g8fa8c739h2teg-a.oregon-postgres.render.com/jobmap"
 }
 
 model Job {

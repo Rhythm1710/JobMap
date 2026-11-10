@@ -26,18 +26,47 @@ def require_service(authorization: str | None = Header(default=None)) -> None:
         raise HTTPException(status_code=401, detail="invalid service credentials")
 
 
-def sign_state(clerk_id: str, secret: str, ttl_seconds: int = 600) -> str:
+MISSING_OAUTH_COOKIE = (
+    "Gmail connect could not be verified because this browser did not start it. "
+    "Use Connect Gmail again in this browser."
+)
+MISMATCH_OAUTH_COOKIE = (
+    "Gmail connect did not match this browser session. "
+    "Use Connect Gmail again in this browser."
+)
+INVALID_OAUTH_STATE = "Gmail connect request was invalid or expired. Use Connect Gmail again."
+
+
+class OauthBindingError(Exception):
+    def __init__(self, reason: str, message: str):
+        self.reason = reason
+        super().__init__(message)
+
+
+def _constant_equal(left: str, right: str) -> bool:
+    return hmac.compare_digest(
+        hashlib.sha256(left.encode()).digest(),
+        hashlib.sha256(right.encode()).digest(),
+    )
+
+
+def sign_state(clerk_id: str, secret: str, browser_nonce: str, ttl_seconds: int = 600) -> str:
+    """Sign a state that is only valid for the browser that holds browser_nonce."""
+    if not browser_nonce or len(browser_nonce) < 16:
+        raise ValueError("browser nonce is required")
     payload = {
         "clerkId": clerk_id,
         "exp": int(time.time()) + ttl_seconds,
-        "nonce": secrets.token_hex(8),
+        "nonce": browser_nonce,
+        "jti": secrets.token_hex(8),
     }
     raw = base64.urlsafe_b64encode(json.dumps(payload, separators=(",", ":")).encode()).decode().rstrip("=")
     signature = hmac.new(secret.encode(), raw.encode(), hashlib.sha256).hexdigest()
     return f"{raw}.{signature}"
 
 
-def verify_state(state: str, secret: str) -> str:
+def verify_state(state: str, secret: str) -> tuple[str, str]:
+    """Return (clerk_id, browser_nonce) from a signed, unexpired state."""
     if not secret or "." not in state:
         raise ValueError("invalid oauth state")
     raw, signature = state.rsplit(".", 1)
@@ -52,6 +81,25 @@ def verify_state(state: str, secret: str) -> str:
     if int(payload.get("exp", 0)) < int(time.time()):
         raise ValueError("oauth state expired")
     clerk_id = payload.get("clerkId")
+    nonce = payload.get("nonce")
     if not isinstance(clerk_id, str) or not clerk_id:
         raise ValueError("invalid oauth state")
+    if not isinstance(nonce, str) or len(nonce) < 16:
+        raise ValueError("invalid oauth state")
+    return clerk_id, nonce
+
+
+def require_browser_binding(state: str, secret: str, browser_nonce: str | None) -> str:
+    """Reject a callback whose browser cookie is missing or belongs to another attempt.
+
+    Returns the clerk id bound into the state. Token exchange must not run unless this passes.
+    """
+    if browser_nonce is None or not browser_nonce.strip():
+        raise OauthBindingError("missing", MISSING_OAUTH_COOKIE)
+    try:
+        clerk_id, expected = verify_state(state, secret)
+    except ValueError as error:
+        raise OauthBindingError("invalid", INVALID_OAUTH_STATE) from error
+    if not _constant_equal(browser_nonce, expected):
+        raise OauthBindingError("mismatch", MISMATCH_OAUTH_COOKIE)
     return clerk_id

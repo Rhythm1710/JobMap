@@ -9,7 +9,7 @@ def isolated_settings(monkeypatch):
     monkeypatch.setenv("SERVICE_SECRET", "test-secret")
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "google-client")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "google-secret")
-    monkeypatch.setenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/gmail/oauth/callback")
+    monkeypatch.setenv("GOOGLE_REDIRECT_URI", "http://localhost:3000/api/gmail/callback")
     monkeypatch.setenv("APP_URL", "http://localhost:3000")
     monkeypatch.setenv("TOKEN_ENCRYPTION_KEY", Fernet.generate_key().decode())
     monkeypatch.setenv("LLM_API_KEY", "")

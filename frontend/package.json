@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --experimental-strip-types --test utils/oauthBinding.test.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.1.6",

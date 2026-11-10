@@ -20,12 +20,12 @@ _AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 _TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 
-def build_authorization_url(clerk_id: str, settings: Settings) -> str:
+def build_authorization_url(clerk_id: str, settings: Settings, browser_nonce: str) -> str:
     if not settings.google_configured:
         raise RuntimeError("Google OAuth client is not configured")
     if not settings.service_secret:
         raise RuntimeError("SERVICE_SECRET is not configured")
-    state = sign_state(clerk_id, settings.service_secret)
+    state = sign_state(clerk_id, settings.service_secret, browser_nonce)
     params = {
         "client_id": settings.google_client_id,
         "redirect_uri": settings.google_redirect_uri,

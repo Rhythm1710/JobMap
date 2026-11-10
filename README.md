@@ -72,10 +72,10 @@ uvicorn app.main:app --reload --port 8000
 1. In Google Cloud, create a project and enable the **Gmail API**.
 2. Configure the OAuth consent screen. For a single personal account, External + Testing, and add the Gmail address as a test user, is enough to start. See the caveat below about refresh-token lifetime.
 3. Create an OAuth client of type **Web application**.
-4. Authorized redirect URI:
-   - Local: `http://localhost:8000/gmail/oauth/callback`
-   - Railway: `https://<your-service>.up.railway.app/gmail/oauth/callback`
-5. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` on the Python service.
+4. Authorized redirect URI. Google must send the browser back to the Next.js app, which is where the connect cookie lives:
+   - Local: `http://localhost:3000/api/gmail/callback`
+   - Vercel: `https://<your-app>/api/gmail/callback`
+5. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` on the Python service. `GOOGLE_REDIRECT_URI` is the Next.js callback above, not a Railway URL.
 6. Set `APP_URL` to the Next.js origin (`http://localhost:3000` or the Vercel URL) with no path and no trailing slash.
 
 In the app, open Jobs and choose **Connect Gmail**. After Google redirects back, choose **Sync now**. The same import runs on a schedule (below).
@@ -101,7 +101,7 @@ If Vercel uses a pooled connection string, run the migration with the direct URL
 ### Railway (Python)
 
 - Root directory: `backend`. `railway.toml` starts uvicorn and checks `/health`.
-- Set every variable in `backend/.env.example`. `DATABASE_URL` and `SERVICE_SECRET` must match the database and the Vercel app. `APP_URL` is the Vercel origin. `GOOGLE_REDIRECT_URI` is the Railway callback URL, and that exact URI must be on the Google client.
+- Set every variable in `backend/.env.example`. `DATABASE_URL` and `SERVICE_SECRET` must match the database and the Vercel app. `APP_URL` is the Vercel origin. `GOOGLE_REDIRECT_URI` is `https://<your-app>/api/gmail/callback`, and that exact URI must be on the Google client.
 
 Scheduled sync, pick one:
 
@@ -125,13 +125,16 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-The tests cover fixture emails (confirmation, assessment, interview, rejection, offer, newsletter), status merging, same-thread and same company/role dedup, manual-edit locking, and a second sync that does not insert duplicates.
+The tests cover fixture emails (confirmation, assessment, interview, rejection, offer, newsletter), status merging, same-thread and same company/role dedup, manual-edit locking, a second sync that does not insert duplicates, and the Gmail OAuth browser-cookie binding (matching cookie, missing cookie, and mismatched cookie).
 
 ```bash
 cd frontend
+npm test
 npm run lint
 npm run build
 ```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the Python tests, and the frontend cookie tests, lint, and build, on pull requests and on pushes to `main`.
 
 ## Phase 2
 

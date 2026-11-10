@@ -35,17 +35,17 @@ function serviceHeaders(): HeadersInit {
   }
 }
 
-async function postJson(path: string, clerkId: string): Promise<Response> {
+async function postJson(path: string, body: Record<string, string>): Promise<Response> {
   return fetch(`${serviceBase()}${path}`, {
     method: "POST",
     headers: serviceHeaders(),
-    body: JSON.stringify({ clerkId }),
+    body: JSON.stringify(body),
     cache: "no-store",
   })
 }
 
-export async function buildGmailConnectUrl(clerkId: string): Promise<string> {
-  const response = await postJson("/gmail/oauth/start", clerkId)
+export async function buildGmailConnectUrl(clerkId: string, browserNonce: string): Promise<string> {
+  const response = await postJson("/gmail/oauth/start", { clerkId, browserNonce })
   if (!response.ok) {
     throw new Error("Could not start Gmail connect")
   }
@@ -56,8 +56,30 @@ export async function buildGmailConnectUrl(clerkId: string): Promise<string> {
   return data.url
 }
 
+export async function completeGmailOauth(
+  code: string,
+  state: string,
+  browserNonce: string
+): Promise<{ ok: true; email?: string | null } | { ok: false; error: string; status: number }> {
+  const response = await postJson("/gmail/oauth/complete", { code, state, browserNonce })
+  let data: { ok?: boolean; email?: string | null; detail?: string } = {}
+  try {
+    data = await response.json()
+  } catch {
+    data = {}
+  }
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      error: typeof data.detail === "string" ? data.detail : "Gmail connect failed",
+    }
+  }
+  return { ok: true, email: data.email }
+}
+
 export async function requestGmailSync(clerkId: string): Promise<SyncResponse> {
-  const response = await postJson("/gmail/sync", clerkId)
+  const response = await postJson("/gmail/sync", { clerkId })
   let data: SyncResponse & { detail?: string } = { ok: response.ok }
   try {
     data = { ...data, ...(await response.json()) }
@@ -76,7 +98,7 @@ export async function requestGmailSync(clerkId: string): Promise<SyncResponse> {
 export async function requestGmailDisconnect(
   clerkId: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const response = await postJson("/gmail/disconnect", clerkId)
+  const response = await postJson("/gmail/disconnect", { clerkId })
   if (!response.ok) {
     return { ok: false, error: "Could not disconnect Gmail" }
   }

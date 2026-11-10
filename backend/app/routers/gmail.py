@@ -1,7 +1,6 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -16,7 +15,7 @@ from app.gmail.sync import (
     sync_all,
 )
 from app.models import GmailConnection, utcnow
-from app.security import require_service, verify_state
+from app.security import OauthBindingError, require_browser_binding, require_service
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +26,17 @@ class ClerkBody(BaseModel):
     clerkId: str = Field(min_length=1, max_length=200)
 
 
+class StartOAuthBody(BaseModel):
+    clerkId: str = Field(min_length=1, max_length=200)
+    browserNonce: str = Field(min_length=16, max_length=200)
+
+
+class CompleteOAuthBody(BaseModel):
+    code: str = Field(min_length=1, max_length=2048)
+    state: str = Field(min_length=1, max_length=4096)
+    browserNonce: str | None = None
+
+
 def _session_or_503():
     session = create_session()
     if session is None:
@@ -35,36 +45,40 @@ def _session_or_503():
 
 
 @router.post("/gmail/oauth/start")
-def start_oauth(body: ClerkBody, _: None = Depends(require_service)):
+def start_oauth(body: StartOAuthBody, _: None = Depends(require_service)):
     settings = get_settings()
     try:
-        url = build_authorization_url(body.clerkId, settings)
+        url = build_authorization_url(body.clerkId, settings, body.browserNonce)
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
     return {"url": url}
 
 
-@router.get("/gmail/oauth/callback")
-def oauth_callback(code: str | None = None, state: str | None = None, error: str | None = None):
+@router.post("/gmail/oauth/complete")
+def complete_oauth(body: CompleteOAuthBody, _: None = Depends(require_service)):
+    """Exchange the Google code only when the browser nonce matches the signed state.
+
+    The Next.js callback sends the httpOnly cookie value as browserNonce. A missing
+    or mismatched value is the case where someone approved a consent URL that a
+    different browser started. Do not call Google before that check.
+    """
     settings = get_settings()
-    destination = settings.app_url.rstrip("/") + "/jobs"
-    if error or not code or not state:
-        return RedirectResponse(f"{destination}?gmail=denied")
-    session = create_session()
-    if session is None:
-        return RedirectResponse(f"{destination}?gmail=error")
     try:
-        clerk_id = verify_state(state, settings.service_secret)
-        tokens = exchange_code(code, settings)
+        clerk_id = require_browser_binding(body.state, settings.service_secret, body.browserNonce)
+    except OauthBindingError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    session = _session_or_503()
+    try:
+        tokens = exchange_code(body.code, settings)
         email = _profile_email(tokens, settings)
         save_connection(session, clerk_id, tokens, settings, email)
     except Exception:
-        logger.exception("gmail oauth callback failed")
+        logger.exception("gmail oauth complete failed")
         session.rollback()
-        return RedirectResponse(f"{destination}?gmail=error")
+        raise HTTPException(status_code=502, detail="Gmail connect failed")
     finally:
         session.close()
-    return RedirectResponse(f"{destination}?gmail=connected")
+    return {"ok": True, "email": email}
 
 
 def _profile_email(tokens: dict, settings) -> str | None:

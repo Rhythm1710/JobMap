@@ -12,6 +12,10 @@ import { useToast } from '@/components/ui/use-toast';
 const NOTICES: Record<string, string> = {
   connected: 'Gmail connected. Run Sync now to import applications.',
   denied: 'Gmail access was not granted.',
+  cookie:
+    'Gmail connect could not be verified because this browser did not start it. Use Connect Gmail again in this browser.',
+  mismatch:
+    'Gmail connect did not match this browser session. Use Connect Gmail again in this browser.',
   error: 'Gmail connect failed. Check the ingestion service and the OAuth redirect URI.',
 };
 

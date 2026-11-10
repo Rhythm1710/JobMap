@@ -30,7 +30,7 @@ def test_oauth_start_returns_a_web_authorization_url():
     client = TestClient(app)
     response = client.post(
         "/gmail/oauth/start",
-        json={"clerkId": "user_123"},
+        json={"clerkId": "user_123", "browserNonce": "a" * 32},
         headers={"Authorization": "Bearer test-secret"},
     )
     assert response.status_code == 200
@@ -40,12 +40,16 @@ def test_oauth_start_returns_a_web_authorization_url():
     assert "prompt=consent" in url
     assert "gmail.readonly" in url
     assert "response_type=code" in url
+    assert "api%2Fgmail%2Fcallback" in url
     assert "installed" not in url.lower()
 
 
 def test_oauth_state_roundtrip_and_tamper():
-    state = sign_state("user_abc", "test-secret", ttl_seconds=60)
-    assert verify_state(state, "test-secret") == "user_abc"
+    nonce = "n" * 32
+    state = sign_state("user_abc", "test-secret", nonce, ttl_seconds=60)
+    clerk_id, bound = verify_state(state, "test-secret")
+    assert clerk_id == "user_abc"
+    assert bound == nonce
     try:
         verify_state(state + "x", "test-secret")
         raise AssertionError("tampered state was accepted")

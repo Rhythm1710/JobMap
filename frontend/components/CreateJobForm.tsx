@@ -8,6 +8,7 @@ import {
   JobMode,
   createAndEditJobSchema,
   CreateAndEditJobType,
+  emptyJobForm,
 } from '@/utils/types';
 
 import { Form } from '@/components/ui/form';
@@ -20,16 +21,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 
 function CreateJobForm() {
-  // 1. Define your form.
   const form = useForm<CreateAndEditJobType>({
     resolver: zodResolver(createAndEditJobSchema),
-    defaultValues: {
-      position: '',
-      company: '',
-      location: '',
-      status: JobStatus.Pending,
-      mode: JobMode.FullTime,
-    },
+    defaultValues: emptyJobForm(),
   });
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -49,7 +43,6 @@ function CreateJobForm() {
       queryClient.invalidateQueries({ queryKey: ['charts'] });
 
       router.push('/jobs');
-      // form.reset();
     },
   });
 
@@ -64,20 +57,15 @@ function CreateJobForm() {
       >
         <h2 className='capitalize font-semibold text-4xl mb-6'>add job</h2>
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-start'>
-          {/* position */}
           <CustomFormField name='position' control={form.control} />
-          {/* company */}
           <CustomFormField name='company' control={form.control} />
-          {/* location */}
           <CustomFormField name='location' control={form.control} />
-          {/* job status */}
           <CustomFormSelect
             name='status'
             control={form.control}
             labelText='job status'
             items={Object.values(JobStatus)}
           />
-          {/* job  type */}
           <CustomFormSelect
             name='mode'
             control={form.control}

@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// JobMap schema. The Next.js app owns migrations.
+// The Python ingestion service maps these same tables and does not create them.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,13 +11,73 @@ datasource db {
 }
 
 model Job {
-  id        String      @id @default(uuid())
-  clerkId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  position    String
-  company   String
-  location  String
-  status      String
-  mode     String
+  id             String    @id @default(uuid())
+  clerkId        String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  position       String
+  company        String
+  location       String
+  status         String
+  mode           String
+  // manual | gmail | agent (agent is reserved for the Phase 2 apply flow)
+  source         String    @default("manual")
+  gmailMessageId String?
+  gmailThreadId  String?
+  appliedAt      DateTime?
+  jobUrl         String?
+  notes          String?
+  // Normalized identity used to group separate email threads for one application.
+  companyKey     String    @default("")
+  roleKey        String    @default("")
+  // Set when a person corrects company, role, location, mode, or job URL.
+  // Sync may still advance status, and it will not overwrite those fields.
+  manuallyEdited Boolean   @default(false)
+
+  emails GmailMessage[]
+
+  @@unique([clerkId, gmailThreadId])
+  @@index([clerkId, companyKey, roleKey])
+  @@index([clerkId, status])
+}
+
+// One row per Clerk user who has connected Gmail.
+// Tokens are Fernet-encrypted by the Python service. The Next.js app never reads them.
+model GmailConnection {
+  id               String    @id @default(uuid())
+  clerkId          String    @unique
+  email            String?
+  accessTokenEnc   String
+  refreshTokenEnc  String
+  tokenExpiry      DateTime?
+  scopes           String    @default("https://www.googleapis.com/auth/gmail.readonly")
+  historyId        String?
+  // Oldest message timestamp already imported. The backfill walks backward from here.
+  backfillBefore   DateTime?
+  backfillComplete Boolean   @default(false)
+  lastSyncedAt     DateTime?
+  lastSyncStatus   String?
+  lastSyncError    String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// Idempotency log. A Gmail message id is processed at most once per user,
+// except rows left as "deferred", which are retried on the next sync.
+model GmailMessage {
+  id             String    @id @default(uuid())
+  clerkId        String
+  gmailMessageId String
+  gmailThreadId  String
+  jobId          String?
+  job            Job?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  // created | linked | ignored | deferred
+  disposition    String
+  statusHint     String?
+  subject        String?
+  receivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@unique([clerkId, gmailMessageId])
+  @@index([clerkId, gmailThreadId])
 }

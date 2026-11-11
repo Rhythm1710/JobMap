@@ -33,6 +33,9 @@ model Job {
   // Set when a person corrects company, role, location, mode, or job URL.
   // Sync may still advance status, and it will not overwrite those fields.
   manuallyEdited Boolean   @default(false)
+  // Set when the owner chooses the status. Auto-ghost will not overwrite it.
+  // A later email clears this and may move a ghosted row back to that email's status.
+  statusManual   Boolean   @default(false)
 
   emails GmailMessage[]
 

@@ -59,6 +59,7 @@ async function main() {
       createdAt: new Date(job.createdAt),
       companyKey: normalizeKey(job.company),
       roleKey: normalizeRole(job.position),
+      statusManual: true,
     };
   });
   for (const job of jobs) {

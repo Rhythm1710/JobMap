@@ -54,6 +54,7 @@ export async function createJobAction(
         companyKey: normalizeKey(parsed.company),
         roleKey: normalizeRole(parsed.position),
         manuallyEdited: false,
+        statusManual: true,
       },
     })
     return presentJob(job)
@@ -204,6 +205,7 @@ export async function updateJobAction(
         companyKey: normalizeKey(parsed.company),
         roleKey: normalizeRole(parsed.position),
         manuallyEdited: existing.manuallyEdited || identityChanged,
+        statusManual: existing.statusManual || existing.status !== parsed.status,
       },
     })
     return presentJob(job)

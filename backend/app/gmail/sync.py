@@ -15,6 +15,7 @@ from app.config import Settings
 from app.gmail.client import GmailApiClient, HistoryExpired, MessageGone
 from app.gmail.parse import parse_gmail_message
 from app.gmail.search import build_search_query
+from app.jobs.ghost import apply_ghosting
 from app.jobs.repository import (
     apply_decision,
     backfill_keys,
@@ -186,17 +187,19 @@ def sync_connection(
         profile = {}
     if profile.get("emailAddress") and not connection.email:
         connection.email = profile["emailAddress"]
+    ghosted = apply_ghosting(session, connection.clerkId, utcnow(), settings.ghost_after_days)
     connection.lastSyncedAt = utcnow()
     connection.lastSyncStatus = "ok" if stats.errors == 0 else "partial"
     connection.lastSyncError = None if stats.errors == 0 else f"{stats.errors} message(s) failed"
     connection.updatedAt = utcnow()
     session.commit()
     logger.info(
-        "synced gmail for %s created=%s updated=%s skipped=%s",
+        "synced gmail for %s created=%s updated=%s skipped=%s ghosted=%s",
         connection.clerkId,
         stats.created,
         stats.updated,
         stats.skipped,
+        ghosted,
     )
     return stats
 
@@ -265,6 +268,12 @@ def sync_all(settings: Settings) -> list[dict]:
             logger.exception("sync failed for %s", clerk_id)
             session.rollback()
             mark_sync_error(session, clerk_id, safe_error_text(error))
+            try:
+                apply_ghosting(session, clerk_id, utcnow(), settings.ghost_after_days)
+                session.commit()
+            except Exception:
+                logger.exception("ghosting failed for %s", clerk_id)
+                session.rollback()
             results.append({"clerkId": clerk_id, "ok": False})
         finally:
             session.close()

@@ -80,7 +80,16 @@ uvicorn app.main:app --reload --port 8000
 
 In the app, open Jobs and choose **Connect Gmail**. After Google redirects back, choose **Sync now**. The same import runs on a schedule (below).
 
-Classification uses rules first (application received, online assessment / HackerRank / CodeSignal, interview, rejection, offer). Set `LLM_API_KEY` to also call an OpenAI-compatible chat API for mail the rules are unsure about. `LLM_BASE_URL` and `LLM_MODEL` select the provider. With no key, sync still imports the mail the rules recognize.
+Classification uses rules first (application received, online assessment / HackerRank / CodeSignal, interview, rejection, offer). For mail the rules are unsure about, set `LLM_API_KEY`. The client speaks the OpenAI chat API and is aimed at free tiers. The documented default is **Groq** with Llama 3.3 70B (`https://api.groq.com/openai/v1`, model `llama-3.3-70b-versatile`): create a key at https://console.groq.com/keys. Groq needs no extra headers, and that model is accurate enough for short recruiting mail. A personal sync stays inside the free rate limit because only uncertain messages are sent, bodies are truncated, calls are capped (`LLM_MAX_CALLS_PER_RUN`), and HTTP 429s are retried with backoff. If the model returns junk or the cap is hit, the rules result is kept.
+
+Other free presets are commented in `backend/.env.example`:
+
+- OpenRouter: `https://openrouter.ai/api/v1` and a `:free` model such as `meta-llama/llama-3.3-70b-instruct:free` (key at https://openrouter.ai/keys).
+- Gemini's OpenAI-compatible endpoint: `https://generativelanguage.googleapis.com/v1beta/openai` and `gemini-2.5-flash` (key at https://aistudio.google.com/apikey).
+
+With no key, sync still imports the mail the rules recognize.
+
+Each sync also marks `applied` and `assessment` rows `ghosted` when the latest related email (or the applied date, if there is no email) is older than `GHOST_AFTER_DAYS` (default 30, `0` disables it). A later email on that application replaces `ghosted` with the new status. Rows whose status was chosen in the app (`statusManual`, including every `source=manual` row) are not auto-ghosted. Statuses set before this column existed are only protected when `source` is `manual`; a Gmail row whose status you corrected before the migration can still be auto-ghosted once.
 
 ## Deploy
 
@@ -95,6 +104,8 @@ Classification uses rules first (application received, online assessment / Hacke
 cd frontend
 DATABASE_URL="postgresql://..." npx prisma migrate deploy
 ```
+
+That applies the Gmail tables and `20261111120000_status_manual`, which records owner-chosen statuses so they are not auto-ghosted.
 
 If Vercel uses a pooled connection string, run the migration with the direct URL. The Python service should use the direct URL as well. Prisma query parameters such as `pgbouncer` and `schema` are stripped before SQLAlchemy connects.
 

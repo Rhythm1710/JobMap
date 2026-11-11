@@ -51,9 +51,12 @@ def test_status_does_not_regress_and_offer_sticks():
     assert merge_status("rejected", "interview") == "interview"
     assert merge_status("offer", "rejected") == "offer"
     assert merge_status("rejected", "offer") == "offer"
-    assert merge_status("ghosted", "interview") == "ghosted"
+    assert merge_status("ghosted", "interview") == "interview"
+    assert merge_status("ghosted", "applied") == "applied"
+    assert merge_status("ghosted", "rejected") == "rejected"
     assert merge_status("ghosted", "offer") == "offer"
     assert merge_status("withdrawn", "rejected") == "withdrawn"
+    assert merge_status("withdrawn", "interview") == "withdrawn"
 
 
 def test_same_thread_and_same_company_role_update_one_job():

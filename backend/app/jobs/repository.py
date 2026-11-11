@@ -139,6 +139,9 @@ def _apply_changes(row: Job, changes: dict) -> None:
         if column is None:
             continue
         setattr(row, column, value)
+    if "status" in changes:
+        # The new status came from an email, so auto-ghost may consider it again later.
+        row.statusManual = False
     row.updatedAt = utcnow()
 
 
@@ -180,6 +183,7 @@ def apply_decision(session: Session, clerk_id: str, decision, incoming: Incoming
                 companyKey=job["company_key"],
                 roleKey=job["role_key"],
                 manuallyEdited=False,
+                statusManual=False,
             )
         )
         _upsert_message(

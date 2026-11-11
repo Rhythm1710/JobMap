@@ -32,6 +32,8 @@ class Job(Base):
     companyKey = Column(String, nullable=False, default="")
     roleKey = Column(String, nullable=False, default="")
     manuallyEdited = Column(Boolean, nullable=False, default=False)
+    # True when the owner picked the status. Auto-ghost will not overwrite it.
+    statusManual = Column(Boolean, nullable=False, default=False)
 
     __table_args__ = (
         UniqueConstraint("clerkId", "gmailThreadId", name="Job_clerkId_gmailThreadId_key"),

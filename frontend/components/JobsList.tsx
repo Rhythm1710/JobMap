@@ -3,19 +3,20 @@ import JobCard from './JobCard';
 import { useSearchParams } from 'next/navigation';
 import { getAllJobsAction } from '@/utils/actions';
 import { useQuery } from '@tanstack/react-query';
-import ButtonContainer from './ButtonContainer';
 import ComplexButtonContainer from './ComplexButtonContainer';
 function JobsList() {
   const searchParams = useSearchParams();
 
   const search = searchParams.get('search') || '';
   const jobStatus = searchParams.get('jobStatus') || 'all';
+  const jobSource = searchParams.get('jobSource') || 'all';
 
   const pageNumber = Number(searchParams.get('page')) || 1;
 
   const { data, isPending } = useQuery({
-    queryKey: ['jobs', search ?? '', jobStatus, pageNumber],
-    queryFn: () => getAllJobsAction({ search, jobStatus, page: pageNumber }),
+    queryKey: ['jobs', search ?? '', jobStatus, jobSource, pageNumber],
+    queryFn: () =>
+      getAllJobsAction({ search, jobStatus, jobSource, page: pageNumber }),
   });
   const jobs = data?.jobs || [];
   const count = data?.count || 0;

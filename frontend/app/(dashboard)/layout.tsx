@@ -1,15 +1,9 @@
 import Navbar from "@/components/Navbar"
 import Sidebar from "@/components/Sidebar"
-import ChartsContainer from "@/components/ChartsContainer"
-import StatsContainer from "@/components/StatsContainer"
-import { getStatsAction } from "@/utils/actions"
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query"
 
 import { PropsWithChildren } from "react"
+
+export const dynamic = "force-dynamic"
 
 function layout({ children }: PropsWithChildren) {
   return (

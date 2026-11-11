@@ -28,9 +28,15 @@ yarn-error.log*
 
 # local env files
 /frontend/.env*
+!/frontend/.env.example
 /frontend/.env*.local
 /backend/.env*
+!/backend/.env.example
 /.env
+
+# python
+backend/.venv/
+**/.pytest_cache/
 
 # vercel
 /frontend/.vercel

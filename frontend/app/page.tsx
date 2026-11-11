@@ -19,10 +19,9 @@ export default function Home() {
             job <span className="text-[#F8B500]">tracking</span>
           </h1>
           <p className="leading-loose max-w-md mt-10">
-            Lorem ipsum, dolor sit amet consectetur adipisicing elit. Eum
-            explicabo ullam ex consequatur praesentium corrupti tempore fuga
-            necessitatibus, illum sunt minima qui exercitationem fugit dolorum
-            consequuntur cumque, doloremque optio molestias.
+            Track every application in one place. Add roles yourself, or connect
+            Gmail and JobMap will pull in confirmations, assessments, interviews,
+            rejections, and offers.
           </p>
           <Button
             asChild

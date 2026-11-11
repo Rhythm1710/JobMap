@@ -56,6 +56,7 @@ export type JobType = {
   companyKey: string
   roleKey: string
   manuallyEdited: boolean
+  statusManual: boolean
 }
 
 export type GmailStatus = {

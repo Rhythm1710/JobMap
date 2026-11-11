@@ -13,25 +13,28 @@ from uuid import uuid4
 from app.jobs.normalize import normalize_key, normalize_role
 
 # Offer sticks. Rejected can be overwritten by a later interview, assessment, or offer
-# (a pipeline sometimes reopens). Ghosted and withdrawn are manual and stay put
-# unless an offer arrives. Assessment outranks a bare interview mention so an
-# online-assessment email that also says "interview" stays an assessment.
+# (a pipeline sometimes reopens). Withdrawn stays put unless an offer arrives.
+# Ghosted is automatic silence, so any later classified email replaces it even when
+# that status would otherwise be a step backward. Assessment outranks a bare
+# interview mention so an online-assessment email that also says "interview" stays
+# an assessment.
 _RANK = {
     "applied": 1,
     "interview": 2,
     "assessment": 3,
     "offer": 4,
 }
-_MANUAL_STICKY = {"ghosted", "withdrawn"}
 _REOPEN = {"assessment", "interview", "offer"}
 
 
 def merge_status(current: str | None, new: str | None) -> str | None:
     if not new or new == current:
         return current
+    if current == "ghosted":
+        return new
     if current == "offer":
         return current
-    if current in _MANUAL_STICKY:
+    if current == "withdrawn":
         return "offer" if new == "offer" else current
     if new == "rejected":
         return "rejected"

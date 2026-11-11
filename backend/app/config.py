@@ -18,9 +18,17 @@ class Settings(BaseSettings):
     google_redirect_uri: str = "http://localhost:3000/api/gmail/callback"
     app_url: str = "http://localhost:3000"
 
-    llm_base_url: str = "https://api.openai.com/v1"
+    # Default preset is Groq's free Llama 3.3 endpoint. Any OpenAI-compatible URL works.
+    llm_base_url: str = "https://api.groq.com/openai/v1"
     llm_api_key: str = ""
-    llm_model: str = "gpt-4o-mini"
+    llm_model: str = "llama-3.3-70b-versatile"
+    llm_max_body_chars: int = 1200
+    llm_max_calls_per_run: int = 8
+    llm_max_retries: int = 3
+    llm_retry_base_seconds: float = 1.0
+
+    # Mark applied/assessment jobs ghosted after this many days without an email. 0 disables it.
+    ghost_after_days: int = 30
 
     gmail_lookback_days: int = 180
     gmail_max_messages_per_run: int = 200

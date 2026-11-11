@@ -182,18 +182,14 @@ def test_llm_fills_an_ambiguous_email_and_does_not_override_rule_status():
     assert merged.status == "rejected"
 
 
-def test_llm_payload_parses_fenced_json_and_rejects_unknown_status():
+def test_llm_payload_rejects_unknown_status_as_junk():
     payload = parse_llm_payload(
         json.loads(
             '{"is_application": true, "company": "Linear", "position": "Designer", '
             '"status": "hired", "mode": "full-time", "confidence": 0.4}'
         )
     )
-    assert payload is not None
-    assert payload.company == "Linear"
-    assert payload.status is None
-    assert payload.mode == "full-time"
-    assert payload.is_application is True
+    assert payload is None
 
 
 def test_parse_gmail_message_reads_plain_and_html():

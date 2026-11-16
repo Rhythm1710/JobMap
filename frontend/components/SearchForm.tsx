@@ -36,7 +36,7 @@ function SearchContainer() {
 
   return (
     <form
-      className='bg-muted mb-16 p-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 rounded-lg'
+      className='bg-muted mb-6 grid grid-cols-1 gap-3 rounded-lg p-4 sm:mb-16 sm:grid-cols-2 sm:gap-4 sm:p-8 lg:grid-cols-4'
       onSubmit={handleSubmit}
     >
       <Input
@@ -45,9 +45,10 @@ function SearchContainer() {
         name='search'
         aria-label='Search jobs'
         defaultValue={search}
+        className='h-11 sm:h-10'
       />
       <Select defaultValue={jobStatus} name='jobStatus'>
-        <SelectTrigger aria-label='Filter by status'>
+        <SelectTrigger aria-label='Filter by status' className='h-11 sm:h-10'>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -61,7 +62,7 @@ function SearchContainer() {
         </SelectContent>
       </Select>
       <Select defaultValue={jobSource} name='jobSource'>
-        <SelectTrigger aria-label='Filter by source'>
+        <SelectTrigger aria-label='Filter by source' className='h-11 sm:h-10'>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -74,7 +75,9 @@ function SearchContainer() {
           })}
         </SelectContent>
       </Select>
-      <Button type='submit'>Search</Button>
+      <Button type='submit' className='h-11 sm:h-10'>
+        Search
+      </Button>
     </form>
   );
 }

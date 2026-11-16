@@ -13,21 +13,14 @@ type ButtonProps = {
 };
 
 import { Button } from './ui/button';
+import { jobsListPageQuery } from '@/utils/jobsPageQuery';
 function ButtonContainer({ currentPage, totalPages }: ButtonContainerProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
   const handlePageChange = (page: number) => {
-    const defaultParams = {
-      search: searchParams.get('search') || '',
-      jobStatus: searchParams.get('jobStatus') || '',
-      page: String(page),
-    };
-
-    let params = new URLSearchParams(defaultParams);
-
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${jobsListPageQuery(searchParams, page)}`);
   };
 
   const addPageButton = ({ page, activeClass }: ButtonProps) => {
@@ -103,11 +96,11 @@ function ButtonContainer({ currentPage, totalPages }: ButtonContainerProps) {
   };
 
   return (
-    <div className='flex  gap-x-2'>
-      {/* prev */}
+    <div className='flex max-w-full items-center gap-2'>
       <Button
-        className='flex items-center gap-x-2 '
+        className='h-11 w-11 shrink-0 px-0 md:h-10 md:w-auto md:px-4'
         variant='outline'
+        aria-label='Previous page'
         onClick={() => {
           let prevPage = currentPage - 1;
           if (prevPage < 1) prevPage = totalPages;
@@ -115,20 +108,23 @@ function ButtonContainer({ currentPage, totalPages }: ButtonContainerProps) {
         }}
       >
         <ChevronLeft />
-        prev
+        <span className='hidden md:inline'>prev</span>
       </Button>
-      {renderPageButtons()}
-      {/* next */}
+      <p className='min-w-16 text-center text-sm tabular-nums md:hidden'>
+        {currentPage} / {totalPages}
+      </p>
+      <div className='hidden md:flex md:gap-x-2'>{renderPageButtons()}</div>
       <Button
-        className='flex items-center gap-x-2 '
+        className='h-11 w-11 shrink-0 px-0 md:h-10 md:w-auto md:px-4'
         onClick={() => {
           let nextPage = currentPage + 1;
           if (nextPage > totalPages) nextPage = 1;
           handlePageChange(nextPage);
         }}
         variant='outline'
+        aria-label='Next page'
       >
-        next
+        <span className='hidden md:inline'>next</span>
         <ChevronRight />
       </Button>
     </div>

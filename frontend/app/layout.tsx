@@ -3,6 +3,8 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ClerkProvider } from "@clerk/nextjs"
 import Providers from "./providers"
+// Variable Inter covers 400–700. The mobile spec uses 400/500/600/700;
+// it does not use 550 or 650, so those weights are not rounded.
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 }
 
 export default function RootLayout({

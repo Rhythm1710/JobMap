@@ -12,3 +12,16 @@ export function jobsListPageQuery(current: QueryReader, page: number): string {
   })
   return params.toString()
 }
+
+/** One chip is on at a time. Search text stays. */
+export function jobsFilterQuery(
+  search: string,
+  jobStatus: string,
+  jobSource: string,
+): string {
+  const params = new URLSearchParams()
+  if (search) params.set("search", search)
+  if (jobStatus && jobStatus !== "all") params.set("jobStatus", jobStatus)
+  if (jobSource && jobSource !== "all") params.set("jobSource", jobSource)
+  return params.toString()
+}

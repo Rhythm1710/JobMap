@@ -34,10 +34,15 @@ export function CustomFormField({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className='min-w-0'>
           <FormLabel className='capitalize'>{labelText || name}</FormLabel>
           <FormControl>
-            <Input type={type} {...field} value={field.value ?? ''} />
+            <Input
+              type={type}
+              className='h-11 min-w-0 sm:h-10'
+              {...field}
+              value={field.value ?? ''}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -62,10 +67,10 @@ export function CustomFormTextarea({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className='md:col-span-2 lg:col-span-3'>
+        <FormItem className='min-w-0 md:col-span-2 lg:col-span-3'>
           <FormLabel className='capitalize'>{labelText || name}</FormLabel>
           <FormControl>
-            <Textarea {...field} value={field.value ?? ''} />
+            <Textarea className='min-w-0' {...field} value={field.value ?? ''} />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -92,11 +97,11 @@ export function CustomFormSelect({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className='min-w-0'>
           <FormLabel className='capitalize'>{labelText || name}</FormLabel>
           <Select onValueChange={field.onChange} value={field.value}>
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className='h-11 sm:h-10'>
                 <SelectValue />
               </SelectTrigger>
             </FormControl>

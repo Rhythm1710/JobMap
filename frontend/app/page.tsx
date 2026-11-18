@@ -13,7 +13,7 @@ export default function Home() {
           alt="Logo"
         />
       </header>
-      <section className="max-w-6xl mx-auto px-4 sm:px-8 h-screen -mt-20 grid lg:grid-cols-[1fr,400px] items-center">
+      <section className="max-w-6xl mx-auto grid items-center px-4 py-8 sm:px-8 lg:h-screen lg:-mt-20 lg:grid-cols-[1fr,400px] lg:py-0">
         <div>
           <h1 className="capitalize text-4xl text-[#F8B500] md:text-7xl font-bold">
             job <span className="text-[#F8B500]">tracking</span>
@@ -25,7 +25,7 @@ export default function Home() {
           </p>
           <Button
             asChild
-            className="mt-7"
+            className="mt-7 h-11 lg:h-10"
           >
             <Link href="/add-job">Get Started</Link>
           </Button>

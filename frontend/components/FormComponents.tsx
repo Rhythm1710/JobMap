@@ -20,24 +20,36 @@ type CustomFormFieldProps = {
   name: string;
   control: Control<any>;
   labelText?: string;
+  labelClassName?: string;
   type?: string;
+  placeholder?: string;
 };
 
 export function CustomFormField({
   name,
   control,
   labelText,
+  labelClassName,
   type = 'text',
+  placeholder,
 }: CustomFormFieldProps) {
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
-          <FormLabel className='capitalize'>{labelText || name}</FormLabel>
+        <FormItem className='min-w-0 gap-1.5'>
+          <FormLabel className={`capitalize text-[12px] font-semibold text-[#09090B] md:text-sm md:font-medium ${labelClassName ?? ''}`}>
+            {labelText || name}
+          </FormLabel>
           <FormControl>
-            <Input type={type} {...field} value={field.value ?? ''} />
+            <Input
+              type={type}
+              placeholder={placeholder}
+              className='h-[42px] min-w-0 rounded-[10px] border-[#E4E4E7] px-3 text-[14px] placeholder:text-[#A1A1AA] md:h-10 md:rounded-md'
+              {...field}
+              value={field.value ?? ''}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -62,10 +74,16 @@ export function CustomFormTextarea({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className='md:col-span-2 lg:col-span-3'>
-          <FormLabel className='capitalize'>{labelText || name}</FormLabel>
+        <FormItem className='col-span-2 min-w-0 gap-1.5 lg:col-span-3'>
+          <FormLabel className='text-[12px] font-semibold capitalize text-[#09090B] md:text-sm md:font-medium'>
+            {labelText || name}
+          </FormLabel>
           <FormControl>
-            <Textarea {...field} value={field.value ?? ''} />
+            <Textarea
+              className='h-[72px] min-h-0 min-w-0 rounded-[10px] border-[#E4E4E7] px-3 py-2.5 text-[14px] md:h-auto md:min-h-[96px] md:rounded-md'
+              {...field}
+              value={field.value ?? ''}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -92,11 +110,13 @@ export function CustomFormSelect({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
-          <FormLabel className='capitalize'>{labelText || name}</FormLabel>
+        <FormItem className='min-w-0 gap-1.5'>
+          <FormLabel className='text-[12px] font-semibold capitalize text-[#09090B] md:text-sm md:font-medium'>
+            {labelText || name}
+          </FormLabel>
           <Select onValueChange={field.onChange} value={field.value}>
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className='h-[42px] rounded-[10px] border-[#E4E4E7] text-[14px] md:h-10 md:rounded-md'>
                 <SelectValue />
               </SelectTrigger>
             </FormControl>

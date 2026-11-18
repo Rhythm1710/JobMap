@@ -13,12 +13,14 @@ test("week buckets count the last six weeks and mark the current one", () => {
   const weeks = buildWeekBuckets(now, [
     new Date(2026, 10, 16, 8),
     new Date(2026, 10, 17, 8),
+    new Date(2026, 10, 15, 8),
     new Date(2026, 9, 1, 8),
   ])
   assert.equal(weeks.length, 6)
   assert.equal(weeks[5]?.current, true)
   assert.equal(weeks[5]?.count, 2)
-  assert.equal(weeks.reduce((sum, week) => sum + week.count, 0), 2)
+  assert.equal(weeks[4]?.count, 1)
+  assert.equal(weeks.reduce((sum, week) => sum + week.count, 0), 3)
 })
 
 test("upcoming uses real jobs and does not invent a clock time", () => {

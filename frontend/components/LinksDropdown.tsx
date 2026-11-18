@@ -14,7 +14,7 @@ function DropdownLinks() {
     <div className='hidden sm:block lg:hidden'>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant='outline' size='icon' className='h-11 w-11'>
+          <Button variant='outline' size='icon'>
             <AlignLeft />
             <span className='sr-only'>Toggle links</span>
           </Button>

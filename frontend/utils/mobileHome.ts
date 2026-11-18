@@ -26,8 +26,9 @@ export function companyInitials(company: string): string {
 function startOfWeek(date: Date): Date {
   const copy = new Date(date.getTime())
   const day = copy.getDay()
+  const sinceMonday = day === 0 ? 6 : day - 1
   copy.setHours(0, 0, 0, 0)
-  copy.setDate(copy.getDate() - day)
+  copy.setDate(copy.getDate() - sinceMonday)
   return copy
 }
 

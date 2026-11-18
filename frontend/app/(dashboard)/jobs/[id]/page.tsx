@@ -1,4 +1,5 @@
 import EditJobForm from "@/components/EditJobForm"
+import { MobileJobDetail } from "@/components/mobile/MobileJobDetail"
 import { getSingleJobAction } from "@/utils/actions"
 
 import {
@@ -17,7 +18,10 @@ async function JobDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <EditJobForm jobId={params.id} />
+      <MobileJobDetail jobId={params.id} />
+      <div className="hidden md:block">
+        <EditJobForm jobId={params.id} />
+      </div>
     </HydrationBoundary>
   )
 }

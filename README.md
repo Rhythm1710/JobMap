@@ -89,7 +89,7 @@ Other free presets are commented in `backend/.env.example`:
 
 With no key, sync still imports the mail the rules recognize.
 
-Each sync also marks `applied` and `assessment` rows `ghosted` when the latest related email (or the applied date, if there is no email) is older than `GHOST_AFTER_DAYS` (default 30, `0` disables it). A later email on that application replaces `ghosted` with the new status. Rows whose status was chosen in the app (`statusManual`, including every `source=manual` row) are not auto-ghosted. Statuses set before this column existed are only protected when `source` is `manual`; a Gmail row whose status you corrected before the migration can still be auto-ghosted once.
+Each sync also marks `applied` and `assessment` rows `ghosted` when the latest related email (or the applied date, if there is no email) is older than `GHOST_AFTER_DAYS` (default 30, `0` disables it). A later email on that application replaces `ghosted` with the new status. Rows whose status was chosen in the app (`statusManual`) are not auto-ghosted. A hand-added job is protected only when the chosen status is not the default `applied`; leaving it on `applied` keeps `statusManual` false, so it can still be auto-ghosted. Statuses set before this column existed are only protected when `source` is `manual`; a Gmail row whose status you corrected before the migration can still be auto-ghosted once.
 
 ## Deploy
 

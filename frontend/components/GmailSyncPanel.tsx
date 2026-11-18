@@ -67,7 +67,7 @@ function GmailSyncPanel({ status }: { status: GmailStatus }) {
   }
 
   return (
-    <section className='bg-muted mb-8 p-6 rounded-lg flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+    <section className='mb-6 flex flex-col gap-4 rounded-lg bg-muted p-4 sm:mb-8 sm:p-6 lg:flex-row lg:items-center lg:justify-between'>
       <div className='space-y-1'>
         <h2 className='font-semibold flex items-center gap-2'>
           <Mail className='h-4 w-4' aria-hidden='true' />
@@ -94,18 +94,29 @@ function GmailSyncPanel({ status }: { status: GmailStatus }) {
         )}
         {notice ? <p className='text-sm'>{notice}</p> : null}
       </div>
-      <div className='flex flex-wrap gap-2'>
+      <div className='flex flex-col gap-2 sm:flex-row sm:flex-wrap'>
         {status.connected ? (
           <>
-            <Button type='button' onClick={onSync} disabled={pending}>
+            <Button
+              type='button'
+              className='h-11 w-full sm:h-10 sm:w-auto'
+              onClick={onSync}
+              disabled={pending}
+            >
               {pending ? 'Working...' : 'Sync now'}
             </Button>
-            <Button type='button' variant='outline' onClick={onDisconnect} disabled={pending}>
+            <Button
+              type='button'
+              variant='outline'
+              className='h-11 w-full sm:h-10 sm:w-auto'
+              onClick={onDisconnect}
+              disabled={pending}
+            >
               Disconnect
             </Button>
           </>
         ) : (
-          <Button asChild>
+          <Button asChild className='h-11 w-full sm:h-10 sm:w-auto'>
             <a href='/api/gmail/connect'>Connect Gmail</a>
           </Button>
         )}

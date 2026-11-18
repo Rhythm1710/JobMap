@@ -156,6 +156,51 @@ def test_apply_ghosting_uses_the_latest_email_and_skips_manual_status():
     session.close()
 
 
+def test_hand_added_default_applied_is_ghost_eligible_until_status_is_explicit():
+    """Matches createJobAction: statusManual is set only when status is not applied."""
+    session = _session()
+    old = NOW - timedelta(days=45)
+
+    def created(job_id: str, status: str) -> Job:
+        return Job(
+            id=job_id,
+            clerkId="user_1",
+            createdAt=old,
+            updatedAt=old,
+            position="Backend Engineer",
+            company="Acme",
+            location="Remote",
+            status=status,
+            mode="full-time",
+            source="manual",
+            appliedAt=old,
+            companyKey="acme",
+            roleKey="backend engineer",
+            manuallyEdited=False,
+            statusManual=status != "applied",
+        )
+
+    session.add_all(
+        [
+            created("default-applied", "applied"),
+            created("explicit-assessment", "assessment"),
+        ]
+    )
+    session.commit()
+    changed = apply_ghosting(session, "user_1", NOW, 30)
+    session.commit()
+    assert changed == 1
+    default_applied = session.get(Job, "default-applied")
+    explicit = session.get(Job, "explicit-assessment")
+    assert default_applied is not None
+    assert explicit is not None
+    assert default_applied.statusManual is False
+    assert default_applied.status == "ghosted"
+    assert explicit.statusManual is True
+    assert explicit.status == "assessment"
+    session.close()
+
+
 def test_sync_ghosts_an_old_application(db):
     connection = _connection()
     db.add(connection)

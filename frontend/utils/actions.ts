@@ -12,6 +12,7 @@ import {
 } from "./types"
 import { normalizeKey, normalizeRole } from "./normalize"
 import { buildUpcoming, buildWeekBuckets, MobileUpcoming, MobileWeek } from "./mobileHome"
+import { statusManualOnCreate } from "./statusManual"
 import { redirect } from "next/navigation"
 import { Prisma } from "@prisma/client"
 import dayjs from "dayjs"
@@ -55,7 +56,7 @@ export async function createJobAction(
         companyKey: normalizeKey(parsed.company),
         roleKey: normalizeRole(parsed.position),
         manuallyEdited: false,
-        statusManual: true,
+        statusManual: statusManualOnCreate(parsed.status),
       },
     })
     return presentJob(job)

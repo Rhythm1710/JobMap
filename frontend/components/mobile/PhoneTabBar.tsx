@@ -36,8 +36,9 @@ const TABS = [
   { href: "/add-job", label: "Add", icon: AddIcon, active: (path: string) => path === "/add-job" },
 ]
 
-export function PhoneTabBar() {
+export function PhoneTabBar({ path }: { path?: string }) {
   const pathname = usePathname()
+  const current = path ?? pathname
 
   return (
     <nav
@@ -51,7 +52,7 @@ export function PhoneTabBar() {
       }}
     >
       {TABS.map((tab) => {
-        const on = tab.active(pathname)
+        const on = tab.active(current)
         const Icon = tab.icon
         return (
           <Link

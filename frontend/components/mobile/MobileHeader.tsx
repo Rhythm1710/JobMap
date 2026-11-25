@@ -22,9 +22,10 @@ function BackChevron() {
   )
 }
 
-export function MobileHeader() {
+export function MobileHeader({ path }: { path?: string }) {
   const pathname = usePathname()
-  const detail = pathname.startsWith("/jobs/")
+  const current = path ?? pathname
+  const detail = current.startsWith("/jobs/")
 
   return (
     <header

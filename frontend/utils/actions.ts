@@ -287,6 +287,47 @@ export async function getMobileHomeAction(): Promise<{
   }
 }
 
+export async function getJobFacetsAction(): Promise<{
+  total: number
+  interview: number
+  offer: number
+  applied: number
+  gmail: number
+}> {
+  const userId = authenticateAndRedirect()
+  try {
+    const [statuses, sources, total] = await Promise.all([
+      prisma.job.groupBy({
+        by: ["status"],
+        where: { clerkId: userId },
+        _count: { status: true },
+      }),
+      prisma.job.groupBy({
+        by: ["source"],
+        where: { clerkId: userId },
+        _count: { source: true },
+      }),
+      prisma.job.count({ where: { clerkId: userId } }),
+    ])
+    const tally: Record<string, number> = {}
+    for (const row of statuses) {
+      const status = canonicalStatus(row.status)
+      tally[status] = (tally[status] ?? 0) + row._count.status
+    }
+    const gmail = sources.find((row) => row.source === "gmail")?._count.source ?? 0
+    return {
+      total,
+      interview: tally.interview ?? 0,
+      offer: tally.offer ?? 0,
+      applied: tally.applied ?? 0,
+      gmail,
+    }
+  } catch (error) {
+    console.error(error)
+    return { total: 0, interview: 0, offer: 0, applied: 0, gmail: 0 }
+  }
+}
+
 export async function getChartsDataAction(): Promise<
   Array<{ date: string; count: number }>
 > {

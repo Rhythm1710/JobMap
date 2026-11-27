@@ -6,13 +6,21 @@ Phase 2 (a browser agent that applies with approval, and a LinkedIn referral wor
 
 ## Architecture
 
-- **Next.js app** (`frontend/`) — UI, Clerk auth, Prisma. Deploy on Vercel.
+- **Next.js app** (`frontend/`) — UI, Auth.js (Google) sign-in, Prisma. Deploy on Vercel.
 - **Ingestion service** (`backend/`) — FastAPI. Gmail OAuth, sync, classification. Deploy on Railway.
 - **Postgres** — one database. Prisma owns the schema and migrations. The Python service maps the same tables and does not create them.
 
-Clerk is the only user identity. Rows are keyed by `clerkId`. The browser never calls the Python service. Server actions send `Authorization: Bearer $SERVICE_SECRET` plus the Clerk user id.
+Sign-in is Auth.js with the Google provider. The session is a JWT, and the user id is the Google account subject (`sub`). That id is stored in the existing `clerkId` column, and the Python service still receives it as `clerkId`, so the schema and the API do not change. The browser never calls the Python service. Server actions send `Authorization: Bearer $SERVICE_SECRET` plus that id.
 
-Gmail uses the web OAuth authorization-code flow with the `gmail.readonly` scope. Refresh tokens are encrypted with Fernet before they are stored. The Next.js app never reads token columns.
+Rows that already use a Clerk user id are kept. On sign-in, if exactly one `GmailConnection.email` matches the Google account email and that row's `clerkId` is still a Clerk id (`user_…`), `Job`, `GmailMessage`, and `GmailConnection` rows for that id are updated to the Google `sub`. Nothing is deleted. If two connections share the email, or Gmail was never connected, the rows are left as they are. In that case set the id once (after sign-in, `session.user.id` is the `sub`):
+
+```sql
+UPDATE "Job" SET "clerkId" = '<google-sub>' WHERE "clerkId" = '<clerk-user-id>';
+UPDATE "GmailMessage" SET "clerkId" = '<google-sub>' WHERE "clerkId" = '<clerk-user-id>';
+UPDATE "GmailConnection" SET "clerkId" = '<google-sub>' WHERE "clerkId" = '<clerk-user-id>';
+```
+
+Signing in and connecting Gmail are separate OAuth flows. Sign-in requests `openid`, `email`, and `profile`. Gmail connect requests `https://www.googleapis.com/auth/gmail.readonly` only. They can share one Google Cloud client or use two. A shared client needs both redirect URIs registered. Gmail refresh tokens are encrypted with Fernet before they are stored. The Next.js app never reads token columns.
 
 ## Status values
 
@@ -30,9 +38,9 @@ Current statuses: `applied`, `assessment`, `interview`, `offer`, `rejected`, `gh
 
 ## Local setup
 
-### 1. Database and Clerk
+### 1. Database and Google sign-in
 
-Create a Postgres database and a Clerk application. Copy `frontend/.env.example` to `frontend/.env` and fill it in.
+Create a Postgres database and a Google OAuth client (below). Copy `frontend/.env.example` to `frontend/.env` and fill in `DATABASE_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`, and `AUTH_GOOGLE_SECRET`. `AUTH_TRUST_HOST` is optional: Vercel sets `VERCEL=1`, and the app sets `trustHost`, so production on Vercel does not need it. The Next.js build does not require the `AUTH_*` variables.
 
 ```bash
 cd frontend
@@ -41,7 +49,7 @@ npx prisma migrate deploy
 npm run dev
 ```
 
-The app runs at http://localhost:3000. Sign in with Clerk, then use Add job.
+The app runs at http://localhost:3000. Sign in with Google, then use Add job.
 
 ### 2. Ingestion service
 
@@ -72,11 +80,12 @@ uvicorn app.main:app --reload --port 8000
 1. In Google Cloud, create a project and enable the **Gmail API**.
 2. Configure the OAuth consent screen. For a single personal account, External + Testing, and add the Gmail address as a test user, is enough to start. See the caveat below about refresh-token lifetime.
 3. Create an OAuth client of type **Web application**.
-4. Authorized redirect URI. Google must send the browser back to the Next.js app, which is where the connect cookie lives:
-   - Local: `http://localhost:3000/api/gmail/callback`
-   - Vercel: `https://<your-app>/api/gmail/callback`
-5. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` on the Python service. `GOOGLE_REDIRECT_URI` is the Next.js callback above, not a Railway URL.
-6. Set `APP_URL` to the Next.js origin (`http://localhost:3000` or the Vercel URL) with no path and no trailing slash.
+4. Authorized JavaScript origins: `http://localhost:3000` and the deployed origin (for this app, `https://jobmap.rhythmarora.dev`).
+5. Authorized redirect URIs. Sign-in and Gmail connect return to different paths on the Next.js app:
+   - Sign-in (Auth.js), scopes `openid email profile`: `http://localhost:3000/api/auth/callback/google` and `https://jobmap.rhythmarora.dev/api/auth/callback/google`
+   - Gmail connect, scope `https://www.googleapis.com/auth/gmail.readonly`: `http://localhost:3000/api/gmail/callback` and `https://jobmap.rhythmarora.dev/api/gmail/callback`
+6. Put the client id and secret in `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` on the Next.js app. Put the same pair, or a second client's pair, in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` on the Python service. `GOOGLE_REDIRECT_URI` is the Gmail callback above, not a Railway URL.
+7. Set `APP_URL` to the Next.js origin (`http://localhost:3000` or `https://jobmap.rhythmarora.dev`) with no path and no trailing slash.
 
 In the app, open Jobs and choose **Connect Gmail**. After Google redirects back, choose **Sync now**. The same import runs on a schedule (below).
 
@@ -97,7 +106,7 @@ Each sync also marks `applied` and `assessment` rows `ghosted` when the latest r
 
 - Root directory: `frontend` (or set the install/build commands to run there).
 - Build command: `prisma generate && next build` (already the `build` script).
-- Environment: `DATABASE_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `PYTHON_SERVICE_URL` (the Railway URL), `SERVICE_SECRET`.
+- Environment: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `PYTHON_SERVICE_URL` (the Railway URL), `SERVICE_SECRET`. `AUTH_TRUST_HOST` is not required on Vercel.
 - Apply migrations from a machine that can reach the database:
 
 ```bash

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { ClerkProvider } from "@clerk/nextjs"
 import Providers from "./providers"
 // Variable Inter covers 400–700. The mobile spec uses 400/500/600/700;
 // it does not use 550 or 650, so those weights are not rounded.
@@ -24,15 +23,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        suppressHydrationWarning
-      >
-        <body className={inter.className}>
-          <Providers>{children}</Providers>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html
+      lang="en"
+      suppressHydrationWarning
+    >
+      <body className={inter.className}>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
   )
 }

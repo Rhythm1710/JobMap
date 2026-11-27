@@ -1,21 +1,16 @@
 "use server"
 
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
 import prisma from "./db"
+import { currentUserId } from "./currentUser"
 import { requestGmailDisconnect, requestGmailSync } from "./ingestion"
 import { GmailStatus } from "./types"
 
-function requireUser(): string {
-  const { userId } = auth()
-  if (!userId) {
-    redirect("/")
-  }
-  return userId
+function requireUser(): Promise<string> {
+  return currentUserId()
 }
 
 export async function getGmailStatusAction(): Promise<GmailStatus> {
-  const userId = requireUser()
+  const userId = await requireUser()
   const row = await prisma.gmailConnection.findUnique({
     where: { clerkId: userId },
     select: {
@@ -53,7 +48,7 @@ export async function syncGmailAction(): Promise<{
   updated?: number
   skipped?: number
 }> {
-  const userId = requireUser()
+  const userId = await requireUser()
   try {
     return await requestGmailSync(userId)
   } catch (error) {
@@ -63,7 +58,7 @@ export async function syncGmailAction(): Promise<{
 }
 
 export async function disconnectGmailAction(): Promise<{ ok: boolean; error?: string }> {
-  const userId = requireUser()
+  const userId = await requireUser()
   try {
     return await requestGmailDisconnect(userId)
   } catch (error) {

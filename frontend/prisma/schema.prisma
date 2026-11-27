@@ -12,6 +12,8 @@ datasource db {
 
 model Job {
   id             String    @id @default(uuid())
+  // Auth.js user id: the Google account subject (`sub`). The column name is
+  // unchanged so existing rows and the Python service stay compatible.
   clerkId        String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -44,7 +46,8 @@ model Job {
   @@index([clerkId, status])
 }
 
-// One row per Clerk user who has connected Gmail.
+// One row per user who has connected Gmail.
+// clerkId is the Auth.js user id (Google subject), same value as on Job.
 // Tokens are Fernet-encrypted by the Python service. The Next.js app never reads them.
 model GmailConnection {
   id               String    @id @default(uuid())

@@ -1,7 +1,7 @@
 "use server"
 
 import prisma from "./db"
-import { auth } from "@clerk/nextjs/server"
+import { currentUserId } from "./currentUser"
 import {
   JobType,
   CreateAndEditJobType,
@@ -17,13 +17,8 @@ import { redirect } from "next/navigation"
 import { Prisma } from "@prisma/client"
 import dayjs from "dayjs"
 
-function authenticateAndRedirect(): string {
-  const { userId } = auth()
-
-  if (!userId) {
-    redirect("/")
-  }
-  return userId
+async function authenticateAndRedirect(): Promise<string> {
+  return currentUserId()
 }
 
 function presentJob<T extends { status: string }>(job: T): T {
@@ -38,7 +33,7 @@ function appliedAtFromForm(value: string): Date | null {
 export async function createJobAction(
   values: CreateAndEditJobType
 ): Promise<JobType | null> {
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
   try {
     const parsed = createAndEditJobSchema.parse(values)
     const job = await prisma.job.create({
@@ -86,7 +81,7 @@ export async function getAllJobsAction({
   page: number
   totalPages: number
 }> {
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
 
   try {
     let whereClause: Prisma.JobWhereInput = {
@@ -136,7 +131,7 @@ export async function getAllJobsAction({
 }
 
 export async function deleteJobAction(id: string): Promise<JobType | null> {
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
 
   try {
     const job = await prisma.job.delete({
@@ -153,7 +148,7 @@ export async function deleteJobAction(id: string): Promise<JobType | null> {
 
 export async function getSingleJobAction(id: string): Promise<JobType | null> {
   let job: JobType | null = null
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
 
   try {
     const row = await prisma.job.findUnique({
@@ -176,7 +171,7 @@ export async function updateJobAction(
   id: string,
   values: CreateAndEditJobType
 ): Promise<JobType | null> {
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
 
   try {
     const parsed = createAndEditJobSchema.parse(values)
@@ -217,7 +212,7 @@ export async function updateJobAction(
 }
 
 export async function getStatsAction(): Promise<Record<JobStatus, number>> {
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
   try {
     const stats = await prisma.job.groupBy({
       by: ["status"],
@@ -249,7 +244,7 @@ export async function getMobileHomeAction(): Promise<{
   weeks: MobileWeek[]
   upcoming: MobileUpcoming[]
 }> {
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
   try {
     const jobs = await prisma.job.findMany({
       where: { clerkId: userId },
@@ -294,7 +289,7 @@ export async function getJobFacetsAction(): Promise<{
   applied: number
   gmail: number
 }> {
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
   try {
     const [statuses, sources, total] = await Promise.all([
       prisma.job.groupBy({
@@ -331,7 +326,7 @@ export async function getJobFacetsAction(): Promise<{
 export async function getChartsDataAction(): Promise<
   Array<{ date: string; count: number }>
 > {
-  const userId = authenticateAndRedirect()
+  const userId = await authenticateAndRedirect()
   const twelveMonthsAgo = dayjs().subtract(12, "month").toDate()
   try {
     const jobs = await prisma.job.findMany({

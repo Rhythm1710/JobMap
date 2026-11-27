@@ -1,9 +1,16 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
+import { auth } from "@/auth"
+import { NextResponse } from "next/server"
+import { isProtectedPath } from "@/utils/authPaths"
 
-const isProtectedRoute = createRouteMatcher(["/add-job", "/jobs(.*)", "/stats"])
+export default auth((req) => {
+  const { pathname, search } = req.nextUrl
+  if (pathname.startsWith("/api/auth")) return NextResponse.next()
+  if (!isProtectedPath(pathname)) return NextResponse.next()
+  if (req.auth?.user?.id) return NextResponse.next()
 
-export default clerkMiddleware((auth, req) => {
-  if (isProtectedRoute(req)) auth().protect()
+  const signInUrl = new URL("/signin", req.nextUrl.origin)
+  signInUrl.searchParams.set("callbackUrl", `${pathname}${search}`)
+  return NextResponse.redirect(signInUrl)
 })
 
 export const config = {

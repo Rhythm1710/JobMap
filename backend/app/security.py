@@ -12,7 +12,8 @@ def require_service(authorization: str | None = Header(default=None)) -> None:
     """Shared-secret auth for calls from the Next.js server and Railway cron.
 
     The browser never calls this service directly. Next.js server actions attach
-    the secret after Clerk has already identified the user.
+    the secret after Auth.js has already identified the user. The JSON field is
+    still named clerkId; its value is the Google account subject.
     """
     from app.config import get_settings
 
